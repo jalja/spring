@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/aop   
+        http://www.springframework.org/schema/aop/spring-aop-4.3.xsd   
+        http://www.springframework.org/schema/beans   
+        http://www.springframework.org/schema/beans/spring-beans-4.3.xsd   
+        http://www.springframework.org/schema/context   
+        http://www.springframework.org/schema/context/spring-context-4.3.xsd   
+        http://www.springframework.org/schema/tx   
+        http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+          <!-- 引入jdbc配置文件 -->
+    <context:property-placeholder location="classpath:config/jdbc.properties"/> 
+     <!-- 对JDBC配置进行解密  
+    <bean id="propertyConfigurer" class="cn.com.sinobpo.project.wfjb.utils.EncryptablePropertyPlaceholderConfigurer">  
+         <property name="locations">
+             <list>
+                 <value>classpath:resources/config/jdbc.properties</value>
+             </list>
+         </property>
+    </bean> -->
+    
+    <context:component-scan base-package="com.jalja.org.springmvc.service" />
+ 
+	   
+     <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"  destroy-method="close">
+        <property name="driverClassName">
+          <value>${jdbc_driverClassName}</value>
+        </property>
+        <property name="url">
+          <value>${jdbc_url}</value>
+        </property>
+        <property name="username">
+          <value>${jdbc_username}</value>
+        </property>
+        <property name="password">
+          <value>${jdbc_password}</value>
+        </property>
+        <!-- 连接池最大使用连接数 -->
+        <property name="maxActive">
+          <value>20</value>
+        </property>
+        <!-- 初始化连接大小 -->
+        <property name="initialSize">
+          <value>1</value>
+        </property>
+        <!-- 获取连接最大等待时间 -->
+        <property name="maxWait">
+          <value>60000</value>
+        </property>
+        <!-- 自动清除无用连接 -->
+        <property name="removeAbandoned">
+          <value>true</value>
+        </property>
+        <!-- 清除无用连接的等待时间 -->
+        <property name="removeAbandonedTimeout">
+          <value>180</value>
+        </property>
+        <!-- 连接属性 -->
+        <property name="connectionProperties">
+          <value>clientEncoding=UTF-8</value>
+        </property>
+  </bean>
+     <!-- spring和MyBatis完美整合 -->  
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">  
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:config/mybatis/applicationContext-mybatis.xml"/>
+        <property name="mapperLocations"  value="classpath:mapper/*.xml"/>  
+    </bean> 
+    <!--使用 mapper 代理 的方式     mapper扫描器 -->
+   <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer"> 
+           <!-- 扫描包路径  如果需要扫描多个包 ，中间使用半角逗号隔开 -->
+       <property name="basePackage" value="com.jalja.org.springmvc.mapper"/>  
+       <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>  
+   </bean> 
+    
+     
+    <!--声明式 事务管理   使用jdbc的事务管理  -->
+      <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+     </bean>
+    <!-- 配置事务通知-->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+      <tx:attributes>
+        <tx:method name="update*" propagation="REQUIRED"/>
+        <tx:method name="save*" propagation="REQUIRED"/>
+        <tx:method name="delete*" propagation="REQUIRED"/>
+        <tx:method name="get*"  propagation="SUPPORTS" read-only="true"/>            
+        <tx:method name="find*" propagation="SUPPORTS" read-only="true"/>            
+      </tx:attributes>
+    </tx:advice>
+    <!-- 配置事务的切点,并把事务切点和事务属性不关联起来AOP -->
+    <aop:config>
+        <aop:advisor advice-ref="txAdvice"  pointcut="execution(* com.jalja.org.springmvc.service.*.*(..))"/>
+    </aop:config>
+</beans>

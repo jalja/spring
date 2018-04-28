@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:cache="http://www.springframework.org/schema/cache"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd   
+        http://www.springframework.org/schema/context   
+        http://www.springframework.org/schema/context/spring-context.xsd   
+        http://www.springframework.org/schema/mvc   
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+        
+     <!--注解 处理器 映射器 -->
+     <!-- 映射器  org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping     springmvc3.1以前-->  
+     <!-- 映射器  org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping  springmvc3.1以后 -->
+     <!-- 适配器  org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter     springmvc3.1以前-->  
+     <!-- 适配器 org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter  springmvc3.1以后 -->
+    <!--配置映射器和  适配器 
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"/>
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter"/> -->
+    <!-- 开启注解  映射器和  适配器    这种方式默认加载了很多参数绑定的方法 例如 json转换解析器-->
+    <mvc:annotation-driven/>
+    <!--  配置 Handler
+    <bean class="com.jalja.springmvc_mybatis.controller.UserController"/>-->
+    <!-- 注解 配置              基于组建扫描的方式 -->
+     <context:component-scan base-package="com.jalja.org.springmvc.controller" />
+    <!-- 配置自定义参数解析器 -->
+ 	<mvc:annotation-driven conversion-service="conversionService"/> 
+    <bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+        <property name="converters">
+            <list>
+                <bean class="com.jalja.org.springmvc.handler.CustomDateConverter"></bean>
+            </list>
+        </property>
+    </bean>
+    
+    
+    <!-- 全局异常处理器   -->
+    
+    <bean class="com.jalja.org.springmvc.excption.CustomExceptionResolver"/> 
+   
+    <!-- 支持上传文件 -->  
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!-- 文件大小 5M -->
+        <property name="maxUploadSize" value="5242880"/>
+    </bean>  
+    
+    <!-- springMVC拦截器的配置  -->
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/**" />
+            <bean class="com.jalja.org.springmvc.handler.RequestHandlerInterceptor" />
+        </mvc:interceptor>
+    </mvc:interceptors>
+    
+   
+	 <!-- 使用  restFul 风格 编程 照成 的 静态资源 访问  问题  -->   
+	<mvc:resources location="/" mapping="/**/*.js"/> 
+	<mvc:resources location="/" mapping="/**/*.css"/> 
+	<mvc:resources location="/images/" mapping="/images/*" cache-period="360000"/>
+
+	
+    <!-- 视图映射   jsp解析  默认使用jstl-->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <!-- 默认使用 -->
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/WEB-INF/jsp/" />
+        <property name="suffix" value=".jsp" />
+    </bean>  
+</beans>
